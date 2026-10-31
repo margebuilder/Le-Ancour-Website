@@ -104,10 +104,27 @@
       history.replaceState(history.state, '', window.location.pathname + window.location.search);
     }
   };
-  // Clean up an anchor left by an earlier version when this page is reloaded.
-  // Fresh visits to shared section URLs retain their native anchor navigation.
+  // Save the position at departure, rather than the last clicked section.
+  const positionKey = 'le-ancour:scroll:' + location.pathname + location.search;
+  window.addEventListener('pagehide', () => {
+    try {
+      sessionStorage.setItem(positionKey, JSON.stringify({ x: scrollX, y: scrollY }));
+    } catch { /* Native restoration remains available if storage is blocked. */ }
+  });
   if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
     clearFragment();
+    try {
+      const position = JSON.parse(sessionStorage.getItem(positionKey));
+      if (position && Number.isFinite(position.x) && Number.isFinite(position.y)) {
+        history.scrollRestoration = 'manual';
+        window.addEventListener('pageshow', () => {
+          requestAnimationFrame(() => {
+            window.scrollTo({ left: position.x, top: position.y, behavior: 'instant' });
+            history.scrollRestoration = 'auto';
+          });
+        }, { once: true });
+      }
+    } catch { /* Fall back to normal browser restoration. */ }
   }
   document.addEventListener('click', event => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey ||
@@ -121,12 +138,16 @@
     if (!section) return;
     event.preventDefault();
     clearFragment();
-    const focusTarget = section.querySelector('h1, h2') || section;
-    if (!focusTarget.hasAttribute('tabindex')) {
-      focusTarget.setAttribute('tabindex', '-1');
-      focusTarget.addEventListener('blur', () => focusTarget.removeAttribute('tabindex'), { once: true });
+    // Keyboard navigation moves focus; pointer clicks only move the viewport.
+    // Leaving a clicked heading focused can make browsers scroll back to it.
+    if (event.detail === 0) {
+      const focusTarget = section.querySelector('h1, h2') || section;
+      if (!focusTarget.hasAttribute('tabindex')) {
+        focusTarget.setAttribute('tabindex', '-1');
+        focusTarget.addEventListener('blur', () => focusTarget.removeAttribute('tabindex'), { once: true });
+      }
+      focusTarget.focus({ preventScroll: true });
     }
-    focusTarget.focus({ preventScroll: true });
     section.scrollIntoView({
       behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
       block: 'start'
