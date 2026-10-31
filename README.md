@@ -10,7 +10,7 @@ From this repository, run `python3 -m http.server 8000 --bind 0.0.0.0` and open 
 
 - `index.html`: content and section navigation.
 - `styles.css`: responsive layout, colours, and typography.
-- `script.js`: subtle scroll reveals, with reduced-motion and no-JavaScript fallbacks.
+- `script.js`: staggered scroll reveals and subtle interactions, with reduced-motion and no-JavaScript fallbacks.
 - `assets/`: SVG artwork and favicon.
 
 Company information describes Le Ancour Holdings Inc., its founder Jackie Le, and its investment focus. The supplied contact@yourdomain address remains a visibly marked placeholder. Footer social media labels are intentionally noninteractive. The supplied logo and founder portrait are referenced from leancour.carrd.co; that host must be accessible for the images to load.
